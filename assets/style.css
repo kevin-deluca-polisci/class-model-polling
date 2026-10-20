@@ -123,6 +123,8 @@ a { color: var(--focus); }
 .hx-hatch { fill: url(#hx-hatch); stroke: none; pointer-events: none; }
 .hx-ring { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; pointer-events: none; }
 .hx:focus { outline: none; }
+.hx-find-halo { fill: none; stroke: var(--bg); stroke-width: 5; stroke-linejoin: round; pointer-events: none; }
+.hx-find { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linejoin: round; pointer-events: none; }
 .st-line { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; pointer-events: none; }
 .st-lab { fill: var(--ink); stroke: var(--bg); stroke-width: 3; paint-order: stroke; stroke-linejoin: round; font-size: 10.5px; font-weight: 700; pointer-events: none; user-select: none; }
 .st-lead { stroke: var(--ink-2); stroke-width: 0.8; pointer-events: none; }
@@ -163,7 +165,8 @@ a { color: var(--focus); }
 .seg button { border: 0; background: var(--card); color: var(--ink-2); padding: 7px 14px; font: inherit; font-size: 14px; cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--rule); }
 .seg button.on { background: var(--ink); color: var(--bg); }
-#search { flex: 1 1 220px; min-width: 0; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 15px; }
+#house-search { max-width: 380px; }
+#search, #house-search { flex: 1 1 220px; min-width: 0; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 15px; }
 .table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--card); }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }

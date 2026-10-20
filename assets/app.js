@@ -213,6 +213,7 @@
     };
     el.addEventListener("mouseenter", show); el.addEventListener("focus", show); el.addEventListener("click", show);
     el.addEventListener("mouseleave", hideTip); el.addEventListener("blur", hideTip);
+    el._tip = show; // lets the district search open this tooltip
   }
   function hideTip() { tip.hidden = true; }
   document.addEventListener("click", hideTip);
@@ -262,7 +263,8 @@
     var svg = svgEl("svg", { viewBox: "0 0 " + M.w + " " + M.h, role: "group", "aria-label": "House races by state, one hexagon per district" });
     var pat = svgEl("pattern", { id: "hx-hatch", width: 4.5, height: 4.5, patternUnits: "userSpaceOnUse", patternTransform: "rotate(-45)" }, svgEl("defs", {}, svg));
     svgEl("rect", { x: 3, y: 0, width: 1.5, height: 4.5, fill: "#fff", "fill-opacity": 0.45 }, pat);
-    var cells = svgEl("g", {}, svg), lines = svgEl("g", {}, svg), labs = svgEl("g", {}, svg);
+    var cells = svgEl("g", {}, svg), lines = svgEl("g", {}, svg), labs = svgEl("g", {}, svg), finds = svgEl("g", {}, svg);
+    var placed = []; // every district that has a hexagon, for the search box
     var ring = svgEl("path", { "class": "hx-ring", d: "" }, svg);
     ring.style.display = "none";
     function showRing(d) { ring.setAttribute("d", d); ring.style.display = ""; }
@@ -276,6 +278,7 @@
         if (!d) { unplaced++; return; }
         var p = svgEl("path", { d: d, "class": "hx" + (r.rating ? " hx-" + r.rating.key : ""), role: "img" }, cells);
         attachTip(p, r, useP);
+        placed.push({ r: r, el: p, d: d });
         p.addEventListener("mouseenter", function () { showRing(d); });
         p.addEventListener("focus", function () { showRing(d); });
         p.addEventListener("mouseleave", hideRing);
@@ -293,6 +296,40 @@
     Object.keys(byState).forEach(function (st) { unplaced += byState[st].length; }); // races in a state the layout does not have
     svg.appendChild(ring); // keep the hover outline on top
     box.appendChild(svg);
+
+    // ---- find a district: "PA-7", "pa 07", "Pennsylvania 7", a state ("Texas", "TX") or part of a candidate's name
+    var inp = $("house-search"), fnote = $("house-find-note");
+    function findDistricts(q) {
+      var m = q.match(/^([a-z][a-z .']*?)[\s\-_.]*0*(\d{1,2})$/), st = m ? m[1].trim() : q, n = m ? Number(m[2]) : null;
+      var states = Object.keys(STATE_NAMES).filter(function (k) {
+        var nm = STATE_NAMES[k].toLowerCase();
+        return k.toLowerCase() === st || nm === st || (st.length >= 3 && nm.indexOf(st) === 0);
+      });
+      var hits = placed.filter(function (c) { return states.indexOf(c.r.state) >= 0 && (n == null || c.r.dist === n); });
+      if (!hits.length && !m && q.length >= 3) { // not a place: try candidate names
+        hits = placed.filter(function (c) { return ((c.r.dem_candidate || "") + " " + (c.r.rep_candidate || "")).toLowerCase().indexOf(q) >= 0; });
+      }
+      return hits;
+    }
+    function runFind() {
+      var q = inp.value.trim().toLowerCase();
+      finds.innerHTML = ""; fnote.textContent = ""; hideTip();
+      if (!q) return;
+      var hits = findDistricts(q);
+      if (!hits.length) { fnote.textContent = "No match."; return; }
+      hits.forEach(function (c) { svgEl("path", { d: c.d, "class": "hx-find-halo" }, finds); });
+      hits.forEach(function (c) { svgEl("path", { d: c.d, "class": "hx-find" }, finds); });
+      if (hits.length === 1) {
+        var c = hits[0];
+        fnote.textContent = raceName(c.r);
+        try { c.el.scrollIntoView({ block: "nearest", inline: "center" }); } catch (e) { /* older browsers: skip */ }
+        setTimeout(function () { if (c.el._tip) c.el._tip(); }, 120); // after any scroll, which hides the tooltip
+      } else {
+        var one = hits.every(function (c) { return c.r.state === hits[0].r.state; });
+        fnote.textContent = (one ? STATE_NAMES[hits[0].r.state] + ": " : "") + hits.length + " districts";
+      }
+    }
+    inp.addEventListener("input", runFind);
     if (unplaced) $("house-note").textContent += " " + unplaced + " district(s) could not be placed on the map; they appear in the table below.";
   }
 
