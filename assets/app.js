@@ -24,12 +24,6 @@
     OK:[6,3], LA:[6,4], MS:[6,5], AL:[6,6], GA:[6,7],
     HI:[7,0], TX:[7,3], FL:[7,8]
   };
-  var REGIONS = [
-    ["Northeast", ["ME","NH","VT","MA","RI","CT","NY","NJ","PA"]],
-    ["Midwest", ["OH","MI","IN","IL","WI","MN","IA","MO","ND","SD","NE","KS"]],
-    ["South", ["DE","MD","VA","WV","KY","TN","NC","SC","GA","FL","AL","MS","AR","LA","OK","TX"]],
-    ["West", ["MT","ID","WY","CO","NM","AZ","UT","NV","CA","OR","WA","AK","HI"]]
-  ];
   var STATE_NAMES = {AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"};
 
   var $ = function (id) { return document.getElementById(id); };
@@ -106,7 +100,7 @@
     $("content").hidden = false;
     topline(house, senate, demNotUp, useP, S);
     senateMap(senate, useP);
-    houseGrid(house, useP);
+    houseMap(house, useP);
     legends(useP);
     distribution(S, useP);
     table(races, useP, useI);
@@ -246,30 +240,60 @@
       : "Each state shows the predicted margin. Gray states have no Senate race in 2026.";
   }
 
-  // ---------------------------------------------------------------- house grid
-  function houseGrid(house, useP) {
-    var box = $("house-grid"), byState = {};
-    house.forEach(function (r) { (byState[r.state] = byState[r.state] || []).push(r); });
+  // ---------------------------------------------------------------- house map
+  // One hexagon per district, packed inside each state's outline. assets/map_layout.js holds the shapes;
+  // each state's hexagons are in district-number order (the first hexagon is district 1, and so on).
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function svgEl(name, attrs, parent) {
+    var el = document.createElementNS(SVGNS, name);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(el);
+    return el;
+  }
+  function houseMap(house, useP) {
+    var box = $("house-map"), M = window.HEX_MAP, byState = {}, unplaced = 0;
     box.innerHTML = "";
-    REGIONS.forEach(function (reg) {
-      var div = document.createElement("div"); div.className = "region";
-      div.innerHTML = "<h3>" + reg[0] + "</h3>";
-      reg[1].forEach(function (st) {
-        var rs = (byState[st] || []).sort(function (a, b) { return a.dist - b.dist; });
-        if (!rs.length) return;
-        var row = document.createElement("div"); row.className = "srow";
-        row.innerHTML = "<span class='sl' title='" + STATE_NAMES[st] + "'>" + st + "</span>";
-        var tiles = document.createElement("div"); tiles.className = "tiles";
-        rs.forEach(function (r) {
-          var t = document.createElement("div");
-          t.className = "t " + (r.rating ? "r-" + r.rating.key : "") + (isFixed(r) ? " fixed" : "");
-          attachTip(t, r, useP);
-          tiles.appendChild(t);
-        });
-        row.appendChild(tiles); div.appendChild(row);
+    if (!M || !M.states) {
+      box.innerHTML = "<div class='placeholder'><strong>The House map did not load.</strong> The file <code>assets/map_layout.js</code> is missing or damaged.</div>";
+      return;
+    }
+    house.forEach(function (r) { (byState[r.state] = byState[r.state] || []).push(r); });
+
+    var svg = svgEl("svg", { viewBox: "0 0 " + M.w + " " + M.h, role: "group", "aria-label": "House races by state, one hexagon per district" });
+    var pat = svgEl("pattern", { id: "hx-hatch", width: 4.5, height: 4.5, patternUnits: "userSpaceOnUse", patternTransform: "rotate(-45)" }, svgEl("defs", {}, svg));
+    svgEl("rect", { x: 3, y: 0, width: 1.5, height: 4.5, fill: "#fff", "fill-opacity": 0.45 }, pat);
+    var cells = svgEl("g", {}, svg), lines = svgEl("g", {}, svg), labs = svgEl("g", {}, svg);
+    var ring = svgEl("path", { "class": "hx-ring", d: "" }, svg);
+    ring.style.display = "none";
+    function showRing(d) { ring.setAttribute("d", d); ring.style.display = ""; }
+    function hideRing() { ring.style.display = "none"; }
+
+    Object.keys(M.states).forEach(function (st) {
+      var S = M.states[st], rs = (byState[st] || []).sort(function (a, b) { return a.dist - b.dist; });
+      delete byState[st];
+      rs.forEach(function (r, i) {
+        var d = S.c[i];
+        if (!d) { unplaced++; return; }
+        var p = svgEl("path", { d: d, "class": "hx" + (r.rating ? " hx-" + r.rating.key : ""), role: "img" }, cells);
+        attachTip(p, r, useP);
+        p.addEventListener("mouseenter", function () { showRing(d); });
+        p.addEventListener("focus", function () { showRing(d); });
+        p.addEventListener("mouseleave", hideRing);
+        p.addEventListener("blur", hideRing);
+        if (isFixed(r)) svgEl("path", { d: d, "class": "hx-hatch" }, cells);
       });
-      box.appendChild(div);
+      svgEl("path", { d: S.o, "class": "st-line" }, lines);
+      if (S.t) {
+        svgEl("line", { x1: S.l[0], y1: S.l[1], x2: S.t[0], y2: S.t[1], "class": "st-lead" }, lines);
+        svgEl("circle", { cx: S.t[0], cy: S.t[1], r: 1.3, fill: "var(--ink-2)" }, lines);
+      }
+      var t = svgEl("text", { x: S.l[0], y: S.l[1], "text-anchor": "middle", "dominant-baseline": "central", "class": "st-lab" }, labs);
+      t.textContent = st;
     });
+    Object.keys(byState).forEach(function (st) { unplaced += byState[st].length; }); // races in a state the layout does not have
+    svg.appendChild(ring); // keep the hover outline on top
+    box.appendChild(svg);
+    if (unplaced) $("house-note").textContent += " " + unplaced + " district(s) could not be placed on the map; they appear in the table below.";
   }
 
   function legends(useP) {
