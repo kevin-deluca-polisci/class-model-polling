@@ -109,15 +109,24 @@ a { color: var(--focus); }
 .st.notup { background: var(--empty); color: var(--ink-3); border: 1px solid var(--empty-line); font-weight: 500; }
 .st.race { cursor: pointer; }
 
-/* house grid */
-.house-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 28px; }
-.region h3 { margin: 0 0 8px; font-size: 13px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
-.srow { display: grid; grid-template-columns: 30px 1fr; align-items: start; gap: 6px; margin-bottom: 4px; }
-.srow .sl { font-size: 12px; font-weight: 600; color: var(--ink-2); line-height: 16px; }
-.tiles { display: flex; flex-wrap: wrap; gap: 2px; }
-/* district tile: pointy-top hexagon, 18px wide by 20px tall */
-.t { width: 18px; height: 20px; cursor: pointer;
-     clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+/* house map: state outlines with one hexagon per district (SVG drawn by app.js from assets/map_layout.js) */
+.house-map { overflow-x: auto; }
+.house-map svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.hx { stroke: var(--card); stroke-width: 0.8; stroke-linejoin: round; cursor: pointer; fill: var(--empty); }
+.hx-safe-d { fill: var(--safe-d); }
+.hx-likely-d { fill: var(--likely-d); }
+.hx-lean-d { fill: var(--lean-d); }
+.hx-toss { fill: var(--toss); }
+.hx-lean-r { fill: var(--lean-r); }
+.hx-likely-r { fill: var(--likely-r); }
+.hx-safe-r { fill: var(--safe-r); }
+.hx-hatch { fill: url(#hx-hatch); stroke: none; pointer-events: none; }
+.hx-ring { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; pointer-events: none; }
+.hx:focus { outline: none; }
+.st-line { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; pointer-events: none; }
+.st-lab { fill: var(--ink); stroke: var(--bg); stroke-width: 3; paint-order: stroke; stroke-linejoin: round; font-size: 10.5px; font-weight: 700; pointer-events: none; user-select: none; }
+.st-lead { stroke: var(--ink-2); stroke-width: 0.8; pointer-events: none; }
+
 .fixed { background-image: repeating-linear-gradient(45deg, transparent 0 3px, rgba(255,255,255,0.45) 3px 4.5px); }
 
 .r-safe-d { background-color: var(--safe-d); color: #fff; }
@@ -172,8 +181,7 @@ tr:last-child td { border-bottom: 0; }
 .fine { color: var(--ink-3); font-size: 13px; margin: 0; max-width: 80ch; }
 
 @media (max-width: 760px) {
-  .topline, .dist, .house-grid { grid-template-columns: 1fr; }
-  .t { width: 18px; height: 20px; }
+  .topline, .dist { grid-template-columns: 1fr; }
   .senate-map { gap: 2px; }
 }
 .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
