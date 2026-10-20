@@ -43,6 +43,10 @@
         <h2>House</h2>
         <p class="note" id="house-note">One hexagon per district, packed inside each state's outline (a state with one district is filled whole). Districts are placed in number order within the state, not at their true locations. Hover or tap a hexagon for details.</p>
       </div>
+      <div class="controls">
+        <input id="house-search" type="search" placeholder="Find a district (such as PA-7, Texas or a candidate)" aria-label="Find a House district">
+        <span class="note" id="house-find-note" aria-live="polite"></span>
+      </div>
       <div id="house-map" class="house-map"></div>
       <div class="legend" id="legend-house"></div>
     </section>
