@@ -9,10 +9,10 @@ window.SITE_CONFIG = {
   // The name shown at the top of your site. A nickname or made-up forecaster
   // name is fine and recommended. Do not put your real name, email, photo,
   // or anything else that identifies you on this site.
-  forecaster_name: "KDL",
+  forecaster_name: "Prof. KDL - Class Model Plus",
 
   // One short line under the name (optional).
-  tagline: "Class Plus Polling",
+  tagline: "Class Model Plus Recent Senate Polling",
 
   // A plain-language description of YOUR model, in your own words. Each line in
   // quotes is one paragraph, followed by a comma. Two or three short paragraphs:
